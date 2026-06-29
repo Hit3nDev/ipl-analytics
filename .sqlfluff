@@ -1,0 +1,31 @@
+[sqlfluff]
+templater = dbt
+dialect = bigquery
+sql_file_exts = .sql
+
+# Line length (SQL is inherently long)
+max_line_length = 120
+
+# dbt templater config
+[sqlfluff:templater:dbt]
+project_dir = ./dbt_project
+
+# Rules to exclude
+[sqlfluff:rules]
+# L031: Avoid table aliases in from and join (we like clear aliases)
+# L034: Select wildcards go before any other select expression
+exclude_rules = L031,L034
+
+# Indentation
+[sqlfluff:indentation]
+indent_unit = space
+tab_space_size = 4
+indented_joins = false
+indented_using_on = true
+
+# Aliasing
+[sqlfluff:rules:L011]
+aliasing = explicit
+
+[sqlfluff:rules:L012]
+aliasing = explicit

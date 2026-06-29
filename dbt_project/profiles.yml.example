@@ -1,0 +1,42 @@
+# dbt_project/profiles.yml.example
+#
+# Copy this to ~/.dbt/profiles.yml  (NOT inside the repo — it contains credentials)
+# Then fill in YOUR_PROJECT_ID.
+#
+# Authentication options:
+#   1. oauth            → uses your `gcloud auth application-default login` creds (recommended locally)
+#   2. service-account  → uses a JSON key file (recommended in CI/CD)
+#
+# BigQuery free tier notes:
+#   - 10 GB storage free per month
+#   - 1 TB query processing free per month
+#   - With clustering + partitioning on our marts, queries stay well under 1 TB
+
+ipl_analytics:
+  target: dev
+  outputs:
+
+    # ── Local development ────────────────────────────────────────────────────
+    dev:
+      type: bigquery
+      method: oauth                        # Uses gcloud CLI credentials
+      project: YOUR_PROJECT_ID             # ← Replace this
+      dataset: dbt_dev_YOUR_NAME           # Personal dev dataset — won't clash with others
+      location: US
+      threads: 4
+      timeout_seconds: 300
+      priority: interactive
+      retries: 1
+
+    # ── CI / Production ──────────────────────────────────────────────────────
+    prod:
+      type: bigquery
+      method: service-account
+      project: YOUR_PROJECT_ID             # ← Replace this
+      dataset: dbt_prod
+      location: US
+      threads: 8
+      timeout_seconds: 600
+      priority: batch
+      retries: 2
+      keyfile: "{{ env_var('DBT_GOOGLE_KEYFILE') }}"   # Set in GitHub Actions secrets

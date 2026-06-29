@@ -1,0 +1,128 @@
+version: 2
+
+models:
+  - name: mart_batsman_season_stats
+    description: |
+      One row per (batsman, season). Core batting statistics mart.
+      Used by: Looker Studio "Top Batsmen" page.
+      Grain: player × season.
+      Partition: season. Cluster: player_name, team.
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 2008
+              max_value: 2025
+      - name: runs_scored
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000
+      - name: strike_rate
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 500
+              row_condition: "qualifies_for_rates = true"
+      - name: batting_average
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 200
+              row_condition: "qualifies_for_rates = true"
+
+  - name: mart_bowler_season_stats
+    description: |
+      One row per (bowler, season). Core bowling statistics mart.
+      Used by: Looker Studio "Bowling Leaders" page.
+      Grain: player × season.
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+      - name: wickets
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 40
+      - name: economy_rate
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+              row_condition: "qualifies_for_rates = true"
+
+  - name: mart_team_season_performance
+    description: |
+      One row per (team, season). Win/loss records, toss analysis, and strategy breakdown.
+      Used by: Looker Studio "Season Overview" and "Team Comparison" pages.
+      Grain: team × season.
+    columns:
+      - name: team
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: win_pct
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+
+  - name: mart_head_to_head
+    description: |
+      All-time head-to-head records between team pairs with canonical ordering.
+      Grain: team_a × team_b (alphabetical).
+    columns:
+      - name: team_a
+        tests:
+          - not_null
+      - name: team_b
+        tests:
+          - not_null
+      - name: team_a_wins
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+      - name: total_matches
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 3
+              max_value: 40
+
+  - name: mart_venue_analytics
+    description: |
+      One row per venue (min 5 matches). Scoring conditions and pitch character analysis.
+      Used by: Looker Studio "Venue Analysis" page.
+    columns:
+      - name: venue
+        tests:
+          - not_null
+          - unique
+      - name: avg_first_innings_score
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 80
+              max_value: 250
+      - name: venue_type
+        tests:
+          - accepted_values:
+              values: ['high_scoring', 'moderate_scoring', 'low_scoring']
+      - name: pitch_character
+        tests:
+          - accepted_values:
+              values: ['bowler_friendly', 'balanced', 'batter_friendly']
+
+  - name: mart_powerplay_analysis
+    description: |
+      Powerplay (overs 1-6) specialist stats for batsmen and bowlers.
+      Grain: player × season × role.

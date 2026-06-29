@@ -1,0 +1,157 @@
+name: dbt CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dbt_project/**'
+      - 'ingestion/**'
+      - '.github/workflows/dbt_ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'dbt_project/**'
+
+jobs:
+  # ── Job 1: Lint SQL with sqlfluff ─────────────────────────────────────────
+  lint:
+    name: SQL Lint (sqlfluff)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install linting deps
+        run: pip install sqlfluff sqlfluff-templater-dbt dbt-bigquery==1.8.0
+
+      - name: Run sqlfluff lint
+        working-directory: dbt_project
+        run: |
+          sqlfluff lint models/ \
+            --dialect bigquery \
+            --templater dbt \
+            --exclude-rules L031,L034  # Allow table aliases without AS
+
+  # ── Job 2: dbt compile + test against BigQuery ────────────────────────────
+  dbt-test:
+    name: dbt compile & test
+    runs-on: ubuntu-latest
+    needs: lint   # Only run if lint passes
+
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_project
+      DBT_GOOGLE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+      DBT_GOOGLE_KEYFILE: /tmp/gcloud-key.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Write GCP service account key
+        run: echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > /tmp/gcloud-key.json
+
+      - name: Write dbt profiles.yml
+        working-directory: dbt_project
+        run: |
+          cat > profiles.yml << EOF
+          ipl_analytics:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: service-account
+                project: ${{ secrets.GCP_PROJECT_ID }}
+                dataset: dbt_ci_${{ github.run_number }}
+                location: US
+                threads: 4
+                timeout_seconds: 300
+                keyfile: /tmp/gcloud-key.json
+          EOF
+
+      - name: dbt deps
+        working-directory: dbt_project
+        run: dbt deps
+
+      - name: dbt debug (connection check)
+        working-directory: dbt_project
+        run: dbt debug
+
+      - name: dbt compile (parse all SQL)
+        working-directory: dbt_project
+        run: dbt compile
+
+      - name: dbt run (staging only for CI speed)
+        working-directory: dbt_project
+        run: |
+          dbt run \
+            --select staging \
+            --vars '{"min_season": 2023}'   # Recent data = cheaper CI queries
+
+      - name: dbt test (staging)
+        working-directory: dbt_project
+        run: |
+          dbt test \
+            --select staging \
+            --store-failures              # Save failed rows to BQ for debugging
+
+      - name: dbt run (marts, recent data)
+        working-directory: dbt_project
+        run: |
+          dbt run \
+            --select marts \
+            --vars '{"min_season": 2023, "min_balls_batting": 10, "min_balls_bowling": 12}'
+
+      - name: dbt test (all)
+        working-directory: dbt_project
+        run: |
+          dbt test \
+            --vars '{"min_season": 2023, "min_balls_batting": 10, "min_balls_bowling": 12}'
+
+      - name: Cleanup CI dataset
+        if: always()    # Run even if tests fail
+        working-directory: dbt_project
+        run: |
+          dbt run-operation drop_schema \
+            --args '{relation: {database: "${{ secrets.GCP_PROJECT_ID }}", schema: "dbt_ci_${{ github.run_number }}"}}'
+        continue-on-error: true
+
+      - name: Upload dbt artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts-${{ github.run_number }}
+          path: |
+            dbt_project/target/manifest.json
+            dbt_project/target/run_results.json
+          retention-days: 7
+
+  # ── Job 3: Python ingestion script tests ─────────────────────────────────
+  ingestion-tests:
+    name: Ingestion unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install deps
+        run: pip install -r requirements.txt pytest
+
+      - name: Run unit tests
+        run: pytest tests/ -v --tb=short

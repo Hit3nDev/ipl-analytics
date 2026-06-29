@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+.env
+
+# Secrets — NEVER commit these
+.env
+profiles.yml
+*.json
+!dashboard_template.json   # The Looker Studio template export is fine
+/tmp/
+
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+dbt_project/profiles.yml   # Use profiles.yml.example instead
+
+# Data — too large for git
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# GCP
+gcloud-key.json
+service-account*.json

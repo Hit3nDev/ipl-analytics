@@ -1,0 +1,119 @@
+version: 2
+
+sources:
+  - name: ipl_raw
+    description: "Raw IPL data loaded from Kaggle via ingestion/load_to_bigquery.py"
+    database: "{{ var('bq_project') }}"
+    schema: ipl_raw
+    tables:
+      - name: matches
+        description: "One row per IPL match, 2008–2024"
+        columns:
+          - name: id
+            description: "Unique match ID"
+            tests:
+              - not_null
+              - unique
+          - name: season
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_between:
+                  min_value: 2008
+                  max_value: 2025
+          - name: date
+            tests:
+              - not_null
+
+      - name: deliveries
+        description: "Ball-by-ball delivery data — one row per delivery"
+        columns:
+          - name: match_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('ipl_raw', 'matches')
+                  field: id
+          - name: inning
+            tests:
+              - accepted_values:
+                  values: [1, 2, 3, 4]   # 3&4 for super over
+          - name: over
+            tests:
+              - dbt_expectations.expect_column_values_to_be_between:
+                  min_value: 0
+                  max_value: 19
+          - name: total_runs
+            tests:
+              - dbt_expectations.expect_column_values_to_be_between:
+                  min_value: 0
+                  max_value: 36          # Theoretical max (6 no-balls + 6 sixes)
+
+models:
+  - name: stg_matches
+    description: |
+      Cleaned and type-cast matches table. One row per match.
+      Standardises team names across franchise renames (e.g., Delhi Daredevils → Delhi Capitals).
+      Adds derived fields: toss_winner_won_match, season_era.
+    columns:
+      - name: match_id
+        description: "Primary key"
+        tests:
+          - not_null
+          - unique
+      - name: match_date
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 2008
+              max_value: 2025
+      - name: result_type
+        tests:
+          - accepted_values:
+              values: ['normal', 'tie', 'no result']
+      - name: toss_decision
+        tests:
+          - accepted_values:
+              values: ['bat', 'field']
+              quote: false
+      - name: is_neutral_venue
+        tests:
+          - not_null
+
+  - name: stg_deliveries
+    description: |
+      Cleaned ball-by-ball deliveries. One row per delivery.
+      Adds: is_legal_ball, is_dot_ball, is_boundary_4/6, phase (powerplay/middle/death).
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_matches')
+              field: match_id
+      - name: inning
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4]
+      - name: phase
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['powerplay', 'middle', 'death']
+      - name: batsman_runs
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 7               # 6 + no-ball
+      - name: is_dot_ball
+        tests:
+          - not_null
+      - name: is_boundary_4
+        tests:
+          - not_null
+      - name: is_boundary_6
+        tests:
+          - not_null

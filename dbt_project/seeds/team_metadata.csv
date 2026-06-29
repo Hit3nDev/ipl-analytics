@@ -1,0 +1,15 @@
+team_name,short_name,city,home_ground,founded_year,primary_color,secondary_color,active
+Mumbai Indians,MI,Mumbai,Wankhede Stadium,2008,#004BA0,#D1AB3E,true
+Chennai Super Kings,CSK,Chennai,MA Chidambaram Stadium,2008,#FFFF3C,#0081E9,true
+Royal Challengers Bangalore,RCB,Bangalore,M Chinnaswamy Stadium,2008,#EC1C24,#000000,true
+Kolkata Knight Riders,KKR,Kolkata,Eden Gardens,2008,#3A225D,#B3A123,true
+Sunrisers Hyderabad,SRH,Hyderabad,Rajiv Gandhi International Stadium,2013,#FF822A,#000000,true
+Delhi Capitals,DC,Delhi,Arun Jaitley Stadium,2008,#00008B,#EF1C25,true
+Punjab Kings,PBKS,Chandigarh,Punjab Cricket Association IS Bindra Stadium,2008,#ED1B24,#A7A9AC,true
+Rajasthan Royals,RR,Jaipur,Sawai Mansingh Stadium,2008,#254AA5,#FF69B4,true
+Lucknow Super Giants,LSG,Lucknow,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,2022,#A72056,#FEBE10,true
+Gujarat Titans,GT,Ahmedabad,Narendra Modi Stadium,2022,#1C1C1C,#0B4973,true
+Deccan Chargers,DC_OLD,Hyderabad,Rajiv Gandhi International Stadium,2008,#002147,#C0C0C0,false
+Kochi Tuskers Kerala,KTK,Kochi,Jawaharlal Nehru Stadium,2011,#F7941D,#006633,false
+Pune Warriors India,PWI,Pune,Subrata Roy Sahara Stadium,2011,#5B2D8E,#FF6600,false
+Rising Pune Supergiant,RPS,Pune,Maharashtra Cricket Association Stadium,2016,#870058,#6BB0CF,false

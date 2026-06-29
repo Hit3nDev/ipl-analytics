@@ -1,0 +1,71 @@
+name: 'ipl_analytics'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'ipl_analytics'
+
+# Model path configuration
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+docs-paths: ["docs"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# ── Model materialisation defaults ────────────────────────────────────────────
+models:
+  ipl_analytics:
+    # Staging: views — cheap, always fresh, never stored
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ["staging"]
+
+    # Intermediate: ephemeral — compiled inline, no warehouse table
+    intermediate:
+      +materialized: ephemeral
+      +tags: ["intermediate"]
+
+    # Marts: tables — persisted, optimised for BI queries
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts"]
+      # BigQuery-specific: partition + cluster for cost efficiency
+      +partition_by:
+        field: "season"
+        data_type: "int64"
+        range:
+          start: 2008
+          end: 2025
+          interval: 1
+
+# ── Variable defaults (override with --vars) ──────────────────────────────────
+vars:
+  # Set to your GCP project ID
+  bq_project: "ipl-analytics-500720"
+
+  # Filter to specific seasons for dev runs (saves BQ query costs)
+  # Override: dbt run --vars '{"min_season": 2020}'
+  min_season: 2008
+
+  # Minimum balls faced to qualify for batting rate stats
+  min_balls_batting: 100
+
+  # Minimum balls bowled to qualify for bowling rate stats
+  min_balls_bowling: 120
+
+# ── Seeds configuration ───────────────────────────────────────────────────────
+seeds:
+  ipl_analytics:
+    +schema: seeds
+    team_metadata:
+      +column_types:
+        founded_year: integer

@@ -187,7 +187,7 @@ Add a text box on Page 1 explaining:
 Built with: Python | dbt Core | BigQuery | Looker Studio
 Data: IPL 2008–2024 (250k+ deliveries)
 Pipeline: Kaggle → BigQuery RAW → dbt staging/intermediate/marts → Looker Studio
-Source code: github.com/YOUR_USERNAME/ipl-analytics
+Source code: github.com/Hit3nDev/ipl-analytics
 ```
 
 ---

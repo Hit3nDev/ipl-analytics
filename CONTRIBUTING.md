@@ -5,7 +5,7 @@ Thanks for your interest in improving this project!
 ## Development Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ipl-analytics.git
+git clone https://github.com/Hit3nDev/ipl-analytics.git
 cd ipl-analytics
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt

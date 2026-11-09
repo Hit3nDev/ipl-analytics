@@ -1,8 +1,6 @@
 # 🏏 IPL Analytics Pipeline
 ### End-to-End Data Engineering with dbt · BigQuery · Looker Studio
 
-![Pipeline Architecture](docs/architecture.png)
-
 [![dbt](https://img.shields.io/badge/dbt-1.8-orange?logo=dbt)](https://www.getdbt.com/)
 [![BigQuery](https://img.shields.io/badge/BigQuery-Free_Tier-blue?logo=google-cloud)](https://cloud.google.com/bigquery)
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://python.org)
@@ -15,7 +13,7 @@
 
 Ingests **16 years of Indian Premier League (IPL) cricket data** (2008–2024, ~250k ball-by-ball deliveries) from a public dataset, transforms it through a multi-layer **dbt pipeline**, loads it into **Google BigQuery**, and visualises it in **Looker Studio** — all on the **free tier**.
 
-**Live Dashboard → [View on Looker Studio](https://lookerstudio.google.com/YOUR_LINK_HERE)**
+**Dashboard →** build it in 10 minutes with the [Looker Studio setup guide](looker_studio/SETUP_GUIDE.md)
 
 ---
 
@@ -36,7 +34,7 @@ Ingests **16 years of Indian Premier League (IPL) cricket data** (2008–2024, ~
                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  dbt STAGING layer                              │
-│      stg_matches  ·  stg_deliveries  ·  stg_teams              │
+│      stg_matches  ·  stg_deliveries                             │
 │      • Rename columns to snake_case                             │
 │      • Cast data types                                          │
 │      • Null handling & deduplication                            │
@@ -45,7 +43,7 @@ Ingests **16 years of Indian Premier League (IPL) cricket data** (2008–2024, ~
                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                dbt INTERMEDIATE layer                           │
-│   int_match_results  ·  int_player_innings  ·  int_team_stats  │
+│   int_match_results · int_player_innings · int_bowler_spells    │
 │      • Business logic aggregations                              │
 │      • Join enrichment                                          │
 └─────────────────┬───────────────────────────────────────────────┘
@@ -191,12 +189,9 @@ ipl-analytics/
 │   └── docs/
 │       └── overview.md
 ├── looker_studio/
-│   ├── SETUP_GUIDE.md              # Step-by-step Looker Studio setup
-│   └── dashboard_template.json     # Looker Studio template export
+│   └── SETUP_GUIDE.md              # Step-by-step Looker Studio setup
 ├── scripts/
 │   └── setup_bigquery.py           # One-time GCP setup
-├── docs/
-│   └── architecture.png
 ├── requirements.txt
 ├── .env.example
 ├── .gitignore
